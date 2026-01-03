@@ -351,8 +351,46 @@ body {
   color: #888;
 }
 
+/* White swatch needs a border to be visible */
+.palette-swatch.white-swatch {
+  border: 1px solid #ccc;
+}
+
+/* Disney swatch styling - rainbow/holographic effect */
+.palette-swatch.disney-swatch {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,0.4) 0%,
+      transparent 50%,
+      rgba(255,255,255,0.2) 100%
+    ),
+    linear-gradient(
+      90deg,
+      #ff6b6b 0%,
+      #ffd93d 20%,
+      #6bcb77 40%,
+      #4d96ff 60%,
+      #9b59b6 80%,
+      #ff6b6b 100%
+    );
+  background-size: 100% 100%, 200% 100%;
+  animation: disney-shimmer 3s ease-in-out infinite;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* Palette container */
+.palette-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .palette-hint {
-  margin-top: 10px;
   font-size: 12px;
   color: #999;
 }
@@ -540,6 +578,13 @@ body {
   height: 16px;
   border-radius: 2px;
   border: 1px solid #ccc;
+  flex-shrink: 0;
+}
+
+.color-count-name {
+  font-size: 12px;
+  color: #555;
+  white-space: nowrap;
 }
 
 .color-count-value {
@@ -652,6 +697,38 @@ body {
   text-shadow: 0 1px 1px rgba(255,255,255,0.8);
 }
 
+/* Disney metallic domino styling - rainbow/holographic effect */
+.domino-cell.disney {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,0.4) 0%,
+      transparent 50%,
+      rgba(255,255,255,0.2) 100%
+    ),
+    linear-gradient(
+      90deg,
+      #ff6b6b 0%,
+      #ffd93d 16%,
+      #6bcb77 32%,
+      #4d96ff 48%,
+      #9b59b6 64%,
+      #ff6b9d 80%,
+      #ff6b6b 100%
+    );
+  background-size: 100% 100%, 200% 100%;
+  animation: disney-shimmer 3s ease-in-out infinite;
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+@keyframes disney-shimmer {
+  0%, 100% { background-position: 0% 0%, 0% 0%; }
+  50% { background-position: 0% 0%, 100% 0%; }
+}
+
 /* Context Menu */
 .context-menu {
   background: white;
@@ -747,6 +824,23 @@ body {
   background: #3a7bc8;
 }
 
+.context-menu-confirm.danger {
+  background: #d9534f;
+}
+
+.context-menu-confirm.danger:hover {
+  background: #c9302c;
+}
+
+.context-menu-expand.danger {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.context-menu-expand.danger:hover {
+  background: #f5c6cb;
+}
+
 .context-menu-divider {
   height: 1px;
   background: #eee;
@@ -756,4 +850,398 @@ body {
 /* Hidden file input */
 .hidden-input {
   display: none;
+}
+
+/* Palette actions container */
+.palette-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Import palette button */
+.import-palette-btn {
+  padding: 4px 10px;
+  background: #4a90d9;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.import-palette-btn:hover {
+  background: #3a7bc8;
+}
+
+/* Warning badge */
+.warning-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: #d9534f;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  border-radius: 50%;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* Over limit styling for color counts */
+.color-count-item.over-limit {
+  background: #fee;
+  border: 1px solid #d9534f;
+}
+
+.color-count-item.over-limit .color-count-value {
+  color: #d9534f;
+  font-weight: 600;
+}
+
+/* Available quantity display */
+.color-count-available {
+  color: #999;
+  font-weight: 400;
+}
+
+.color-count-item.over-limit .color-count-available {
+  color: #d9534f;
+}
+
+/* Stats alerts container - side by side */
+.stats-alerts {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* Stats warning message */
+.stats-warning {
+  flex: 1;
+  min-width: 200px;
+  margin: 0;
+  padding: 8px 12px;
+  background: #fee;
+  border: 1px solid #d9534f;
+  border-radius: 4px;
+  color: #d9534f;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Approaching limit badge */
+.approaching-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: #f0ad4e;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  border-radius: 50%;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* Approaching limit styling for color counts */
+.color-count-item.approaching-limit {
+  background: #fef8e7;
+  border: 1px solid #f0ad4e;
+}
+
+.color-count-item.approaching-limit .color-count-value {
+  color: #8a6d3b;
+}
+
+/* Stats approaching message */
+.stats-approaching {
+  flex: 1;
+  min-width: 200px;
+  margin: 0;
+  padding: 8px 12px;
+  background: #fef8e7;
+  border: 1px solid #f0ad4e;
+  border-radius: 4px;
+  color: #8a6d3b;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Clear swatch in stats */
+.color-count-swatch.clear-swatch {
+  background:
+    linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.5) 50%, transparent 60%),
+    radial-gradient(ellipse at 30% 30%, #ffffff, #e8e8e8);
+  font-size: 10px;
+  font-weight: 600;
+  color: #888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Disney swatch in stats */
+.color-count-swatch.disney-swatch {
+  background:
+    linear-gradient(
+      90deg,
+      #ff6b6b 0%,
+      #ffd93d 20%,
+      #6bcb77 40%,
+      #4d96ff 60%,
+      #9b59b6 80%,
+      #ff6b6b 100%
+    );
+  background-size: 200% 100%;
+  animation: disney-shimmer 3s ease-in-out infinite;
+  font-size: 10px;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Color replacement context menu */
+.color-replace-menu {
+  position: fixed;
+  z-index: 1000;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  padding: 10px;
+  min-width: 160px;
+}
+
+.color-replace-header {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #eee;
+}
+
+.color-replace-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.color-replace-option {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.1s, border-color 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.color-replace-option:hover {
+  transform: scale(1.15);
+  border-color: #333;
+}
+
+.color-replace-option.clear-swatch {
+  background:
+    linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.5) 50%, transparent 60%),
+    radial-gradient(ellipse at 30% 30%, #ffffff, #e8e8e8);
+  color: #888;
+  border: 1px solid #ccc;
+}
+
+.color-replace-option.disney-swatch {
+  background:
+    linear-gradient(
+      90deg,
+      #ff6b6b 0%,
+      #ffd93d 20%,
+      #6bcb77 40%,
+      #4d96ff 60%,
+      #9b59b6 80%,
+      #ff6b6b 100%
+    );
+  background-size: 200% 100%;
+  animation: disney-shimmer 3s ease-in-out infinite;
+  color: white;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.5);
+}
+
+/* Drag selection styles */
+.domino-cell.dragging-source {
+  opacity: 0.4;
+}
+
+.domino-cell.drag-preview {
+  position: relative;
+}
+
+.drag-preview-overlay {
+  position: absolute;
+  inset: 0;
+  opacity: 0.7;
+  border: 2px dashed #333;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.drag-preview-overlay.clear {
+  background:
+    linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.5) 50%, transparent 60%),
+    radial-gradient(ellipse at 30% 30%, #ffffff, #e8e8e8);
+  font-size: 14px;
+  font-weight: 600;
+  color: #888;
+}
+
+.drag-preview-overlay.disney {
+  background:
+    linear-gradient(
+      90deg,
+      #ff6b6b 0%,
+      #ffd93d 20%,
+      #6bcb77 40%,
+      #4d96ff 60%,
+      #9b59b6 80%,
+      #ff6b6b 100%
+    );
+  background-size: 200% 100%;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.5);
+}
+
+/* Duplicate preview (Shift+D) */
+.domino-cell.duplicate-preview {
+  position: relative;
+}
+
+.domino-cell.duplicate-preview::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border: 3px dashed #2196f3;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 5;
+  background: rgba(33, 150, 243, 0.15);
+}
+
+/* Selection context menu section labels */
+.context-menu-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  padding: 8px 12px 4px;
+  letter-spacing: 0.5px;
+}
+
+.selection-context-menu .context-menu-item-group {
+  padding: 0 6px 8px;
+}
+
+/* Fill color popup (Shift+F) */
+.fill-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.fill-popup {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  max-width: 400px;
+  width: 90%;
+}
+
+.fill-popup-header {
+  font-weight: 600;
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.fill-popup-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.fill-popup-swatch {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  transition: transform 0.1s, border-color 0.1s;
+}
+
+.fill-popup-swatch:hover {
+  transform: scale(1.1);
+  border-color: #333;
+}
+
+.fill-popup-swatch.clear-swatch {
+  background:
+    linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.5) 50%, transparent 60%),
+    radial-gradient(ellipse at 30% 30%, #ffffff, #e8e8e8);
+  border: 2px solid #ccc;
+  color: #888;
+}
+
+.fill-popup-swatch.disney-swatch {
+  background: linear-gradient(
+    90deg,
+    #ff6b6b 0%,
+    #ffd93d 20%,
+    #6bcb77 40%,
+    #4d96ff 60%,
+    #9b59b6 80%,
+    #ff6b6b 100%
+  );
+  background-size: 200% 100%;
+  color: white;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.5);
+}
+
+.fill-popup-swatch.white-swatch {
+  border: 2px solid #ccc;
+}
+
+.fill-popup-hint {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #888;
+  text-align: center;
 }

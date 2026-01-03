@@ -38,16 +38,18 @@ function GridControls({
 
   const handleRowKeyDown = (e) => {
     if (e.key === 'Enter') {
-      onRowInputChange(Math.max(1, parseInt(pendingRows) || 1))
-      onApplySize()
+      const value = Math.max(1, parseInt(pendingRows) || 1)
+      onRowInputChange(value)
+      onApplySize(value, undefined) // Pass row value directly
       e.target.blur()
     }
   }
 
   const handleColKeyDown = (e) => {
     if (e.key === 'Enter') {
-      onColInputChange(Math.max(1, parseInt(pendingCols) || 1))
-      onApplySize()
+      const value = Math.max(1, parseInt(pendingCols) || 1)
+      onColInputChange(value)
+      onApplySize(undefined, value) // Pass col value directly
       e.target.blur()
     }
   }
@@ -56,14 +58,14 @@ function GridControls({
     const value = Math.max(1, parseInt(pendingRows) || 1)
     setPendingRows(value)
     onRowInputChange(value)
-    onApplySize()
+    onApplySize(value, undefined) // Pass row value directly
   }
 
   const handleColBlur = () => {
     const value = Math.max(1, parseInt(pendingCols) || 1)
     setPendingCols(value)
     onColInputChange(value)
-    onApplySize()
+    onApplySize(undefined, value) // Pass col value directly
   }
 
   return (

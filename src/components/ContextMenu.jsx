@@ -9,11 +9,15 @@ function ContextMenu({
   onAddColumns,
   onDeleteRow,
   onDeleteColumn,
+  onDeleteRows,
+  onDeleteColumns,
   onClose,
-  canDelete
+  canDelete,
+  maxDelete // maximum rows/columns that can be deleted
 }) {
-  const [showCountInput, setShowCountInput] = useState(null) // 'above', 'below', 'left', 'right'
+  const [showCountInput, setShowCountInput] = useState(null) // 'above', 'below', 'left', 'right', 'delete'
   const [count, setCount] = useState(1)
+  const [deleteCount, setDeleteCount] = useState(1)
 
   const handleAddWithCount = (position) => {
     if (type === 'row') {
@@ -25,13 +29,27 @@ function ContextMenu({
     setCount(1)
   }
 
+  const handleDeleteWithCount = () => {
+    if (type === 'row') {
+      onDeleteRows(index, deleteCount)
+    } else {
+      onDeleteColumns(index, deleteCount)
+    }
+    onClose()
+  }
+
   const handleKeyDown = (e, position) => {
     if (e.key === 'Enter') {
-      handleAddWithCount(position)
+      if (position === 'delete') {
+        handleDeleteWithCount()
+      } else {
+        handleAddWithCount(position)
+      }
     }
     if (e.key === 'Escape') {
       setShowCountInput(null)
       setCount(1)
+      setDeleteCount(1)
     }
   }
 
@@ -141,13 +159,49 @@ function ContextMenu({
       <div className="context-menu-divider" />
 
       {/* Delete */}
-      <button
-        className="context-menu-item danger"
-        onClick={() => isRow ? onDeleteRow(index) : onDeleteColumn(index)}
-        disabled={!canDelete}
-      >
-        Delete {label}
-      </button>
+      <div className="context-menu-item-group">
+        {showCountInput === 'delete' ? (
+          <div className="context-menu-input-row">
+            <input
+              type="number"
+              min="1"
+              max={maxDelete || 50}
+              value={deleteCount}
+              onChange={(e) => setDeleteCount(Math.max(1, Math.min(maxDelete || 50, parseInt(e.target.value) || 1)))}
+              onKeyDown={(e) => handleKeyDown(e, 'delete')}
+              autoFocus
+              className="context-menu-input"
+            />
+            <button
+              className="context-menu-confirm danger"
+              onClick={handleDeleteWithCount}
+            >
+              Delete
+            </button>
+          </div>
+        ) : (
+          <button
+            className="context-menu-item danger"
+            onClick={() => isRow ? onDeleteRow(index) : onDeleteColumn(index)}
+            disabled={!canDelete}
+          >
+            Delete {label}
+            {canDelete && maxDelete > 1 && (
+              <span
+                className="context-menu-expand danger"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShowCountInput('delete')
+                  setDeleteCount(1)
+                }}
+                title="Delete multiple"
+              >
+                -#
+              </span>
+            )}
+          </button>
+        )}
+      </div>
     </div>
   )
 }

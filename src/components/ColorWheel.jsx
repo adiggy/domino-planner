@@ -150,13 +150,13 @@ function ColorWheel({ value, onChange }) {
         onMouseDown={handleWheelMouseDown}
         style={{
           background: `conic-gradient(
-            hsl(0, 100%, 50%),
-            hsl(60, 100%, 50%),
-            hsl(120, 100%, 50%),
-            hsl(180, 100%, 50%),
-            hsl(240, 100%, 50%),
-            hsl(300, 100%, 50%),
-            hsl(360, 100%, 50%)
+            hsl(0, 100%, ${lightness}%),
+            hsl(60, 100%, ${lightness}%),
+            hsl(120, 100%, ${lightness}%),
+            hsl(180, 100%, ${lightness}%),
+            hsl(240, 100%, ${lightness}%),
+            hsl(300, 100%, ${lightness}%),
+            hsl(360, 100%, ${lightness}%)
           )`
         }}
       >

@@ -1,185 +1,125 @@
-import { useState } from 'react'
-import ColorWheel from './ColorWheel'
+import { useState, useEffect } from 'react'
 
 const CLEAR = 'clear'
+const DISNEY = 'disney'
 
 function ColorPalette({
   palette,
   selectedColor,
   onSelectColor,
-  pickerColor,
-  onPickerChange,
-  onAddColor,
-  isDeleteMode,
-  setIsDeleteMode,
-  selectedForDeletion,
-  onToggleForDeletion,
-  onDeleteSelected,
-  onCancelDelete,
-  editingColor,
-  onStartEditing,
-  onApplyEdit,
-  onFinishEditing
+  onReplaceColor,
+  selection
 }) {
-  const [useColorWheel, setUseColorWheel] = useState(false)
+  const hasSelection = selection !== null
+  const [replaceMenu, setReplaceMenu] = useState(null)
 
-  const handleSwatchClick = (color) => {
-    if (isDeleteMode) {
-      onToggleForDeletion(color)
-    } else if (editingColor) {
-      // If in edit mode, clicking another swatch switches to editing that one
-      if (color !== CLEAR && color !== editingColor) {
-        onStartEditing(color)
-      }
-    } else {
-      onSelectColor(color)
-    }
+  const handleSwatchClick = (colorHex) => {
+    onSelectColor(colorHex)
   }
 
-  const handleSwatchDoubleClick = (color) => {
-    if (!isDeleteMode && color !== CLEAR) {
-      onStartEditing(color)
-    }
+  const handleContextMenu = (e, colorHex, colorName) => {
+    e.preventDefault()
+    setReplaceMenu({
+      x: e.clientX,
+      y: e.clientY,
+      sourceColor: colorHex,
+      sourceName: colorName
+    })
   }
 
-  const handleColorChange = (newColor) => {
-    onPickerChange(newColor)
-    if (editingColor) {
-      onApplyEdit(newColor)
+  const handleReplaceWith = (targetColor) => {
+    if (replaceMenu && onReplaceColor) {
+      onReplaceColor(replaceMenu.sourceColor, targetColor, selection)
     }
+    setReplaceMenu(null)
   }
 
-  const deletableCount = palette.filter(c => c !== CLEAR).length
+  // Close menu on click outside
+  useEffect(() => {
+    if (replaceMenu) {
+      const handleClick = () => setReplaceMenu(null)
+      window.addEventListener('click', handleClick)
+      return () => window.removeEventListener('click', handleClick)
+    }
+  }, [replaceMenu])
 
   return (
     <section className="section">
-      <h2 className="section-title">Color Controls</h2>
+      <h2 className="section-title">Color Palette</h2>
 
-      <div className="color-controls-layout">
-        {/* Color selection area */}
-        <div className="color-selection-area">
-          <div className="picker-toggle">
-            <button
-              className={`toggle-btn ${!useColorWheel ? 'active' : ''}`}
-              onClick={() => setUseColorWheel(false)}
-            >
-              Picker
-            </button>
-            <button
-              className={`toggle-btn ${useColorWheel ? 'active' : ''}`}
-              onClick={() => setUseColorWheel(true)}
-            >
-              Wheel
-            </button>
-          </div>
+      <div className="palette-container">
+        <div className="palette-strip">
+          {palette.map((paletteItem, index) => {
+            const colorHex = paletteItem.hex
+            const isClear = colorHex === CLEAR
+            const isDisney = colorHex === DISNEY
+            const isWhite = colorHex.toLowerCase() === '#ffffff'
+            const isSpecial = isClear || isDisney
+            const isSelected = selectedColor === colorHex
 
-          {useColorWheel ? (
-            <ColorWheel
-              value={pickerColor}
-              onChange={handleColorChange}
-            />
-          ) : (
-            <div className="color-picker-wrapper">
-              <input
-                type="color"
-                className="color-picker"
-                value={pickerColor}
-                onChange={(e) => handleColorChange(e.target.value)}
-              />
-            </div>
-          )}
-
-          <div className="color-actions">
-            {editingColor ? (
-              <>
-                <div className="editing-indicator">
-                  Editing: <span className="editing-color-preview" style={{ backgroundColor: editingColor }} />
-                </div>
-                <button className="action-btn" onClick={onFinishEditing}>
-                  Done Editing
-                </button>
-              </>
-            ) : (
-              <button className="add-color-btn" onClick={onAddColor}>
-                Add to palette
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Palette area */}
-        <div className="palette-area">
-          <div className="palette-header">
-            <span className="palette-label">Palette</span>
-            {!isDeleteMode && !editingColor && deletableCount > 0 && (
-              <button
-                className="delete-mode-btn"
-                onClick={() => setIsDeleteMode(true)}
+            return (
+              <div
+                key={index}
+                className={`palette-swatch
+                  ${isClear ? 'clear-swatch' : ''}
+                  ${isDisney ? 'disney-swatch' : ''}
+                  ${isWhite ? 'white-swatch' : ''}
+                  ${isSelected ? 'selected' : ''}
+                `}
+                style={!isSpecial ? { backgroundColor: colorHex } : undefined}
+                onClick={() => handleSwatchClick(colorHex)}
+                onContextMenu={(e) => handleContextMenu(e, colorHex, paletteItem.name || colorHex)}
+                title={
+                  paletteItem.name
+                    ? `${paletteItem.name} - Qty: ${paletteItem.quantity === Infinity ? '∞' : paletteItem.quantity}\nRight-click to replace${hasSelection ? ' in selection' : ' all'}`
+                    : `${colorHex}\nRight-click to replace${hasSelection ? ' in selection' : ' all'}`
+                }
               >
-                Select to Delete
-              </button>
-            )}
-            {isDeleteMode && (
-              <div className="delete-actions">
-                <span className="delete-count">
-                  {selectedForDeletion.size} selected
-                </span>
-                <button
-                  className="action-btn danger"
-                  onClick={onDeleteSelected}
-                  disabled={selectedForDeletion.size === 0}
-                >
-                  Delete Selected
-                </button>
-                <button className="action-btn" onClick={onCancelDelete}>
-                  Cancel
-                </button>
+                {isClear && 'C'}
+                {isDisney && 'D'}
               </div>
-            )}
-          </div>
-
-          <div className="palette-strip">
-            {palette.map((color, index) => {
-              const isClear = color === CLEAR
-              const isSelected = selectedColor === color
-              const isMarkedForDeletion = selectedForDeletion.has(color)
-              const isBeingEdited = editingColor === color
-
-              return (
-                <div
-                  key={index}
-                  className={`palette-swatch
-                    ${isClear ? 'clear-swatch' : ''}
-                    ${isSelected && !isDeleteMode ? 'selected' : ''}
-                    ${isMarkedForDeletion ? 'marked-for-deletion' : ''}
-                    ${isBeingEdited ? 'being-edited' : ''}
-                    ${isDeleteMode && isClear ? 'not-deletable' : ''}
-                  `}
-                  style={!isClear ? { backgroundColor: color } : undefined}
-                  onClick={() => handleSwatchClick(color)}
-                  onDoubleClick={() => handleSwatchDoubleClick(color)}
-                  title={
-                    isClear
-                      ? 'Clear (cannot be deleted)'
-                      : isDeleteMode
-                        ? isMarkedForDeletion ? 'Click to deselect' : 'Click to select for deletion'
-                        : `${color} - Double-click to edit`
-                  }
-                >
-                  {isClear && 'C'}
-                  {isMarkedForDeletion && <span className="deletion-check">✓</span>}
-                </div>
-              )
-            })}
-          </div>
-
-          {!isDeleteMode && !editingColor && (
-            <p className="palette-hint">
-              Click to select for painting. Double-click to edit a color.
-            </p>
-          )}
+            )
+          })}
         </div>
+
+        <p className="palette-hint">
+          Click to select. Right-click to replace all instances.
+        </p>
       </div>
+
+      {/* Color replacement context menu */}
+      {replaceMenu && (
+        <div
+          className="color-replace-menu"
+          style={{ left: replaceMenu.x, top: replaceMenu.y }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="color-replace-header">
+            Replace all "{replaceMenu.sourceName}"{hasSelection ? ' in selection' : ''} with:
+          </div>
+          <div className="color-replace-options">
+            {palette
+              .filter(p => p.hex !== replaceMenu.sourceColor)
+              .map((p, i) => {
+                const isClear = p.hex === CLEAR
+                const isDisney = p.hex === DISNEY
+                const isSpecial = isClear || isDisney
+                return (
+                  <div
+                    key={i}
+                    className={`color-replace-option ${isClear ? 'clear-swatch' : ''} ${isDisney ? 'disney-swatch' : ''}`}
+                    style={!isSpecial ? { backgroundColor: p.hex } : undefined}
+                    onClick={() => handleReplaceWith(p.hex)}
+                    title={p.name || p.hex}
+                  >
+                    {isClear && 'C'}
+                    {isDisney && 'D'}
+                  </div>
+                )
+              })}
+          </div>
+        </div>
+      )}
     </section>
   )
 }
