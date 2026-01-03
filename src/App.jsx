@@ -123,6 +123,7 @@ function App() {
   const [history, setHistory] = useState([])
   const [historyIndex, setHistoryIndex] = useState(-1)
   const isUndoRedo = useRef(false)
+  const historyIndexRef = useRef(historyIndex) // Keep ref in sync for use in callbacks
 
   // Palette: array of { hex, quantity, name? }, 'clear' is always first
   const [palette, setPalette] = useState(DEFAULT_PALETTE)
@@ -143,7 +144,7 @@ function App() {
 
   // Drag selection state
   const [isDraggingSelection, setIsDraggingSelection] = useState(false)
-  const [dragOffset, setDragOffset] = useState({ row: 0, col: 0 })
+  const dragOffsetRef = useRef({ row: 0, col: 0 })
   const [dragPreview, setDragPreview] = useState(null)
 
   // Clipboard for copy/paste
@@ -201,8 +202,10 @@ function App() {
       isUndoRedo.current = false
       return
     }
+    // Use ref to get current historyIndex value (avoids stale closure)
+    const currentIndex = historyIndexRef.current
     setHistory(prev => {
-      const newHistory = prev.slice(0, historyIndex + 1)
+      const newHistory = prev.slice(0, currentIndex + 1)
       newHistory.push(cloneGrid(newGrid))
       if (newHistory.length > MAX_HISTORY) {
         newHistory.shift()
@@ -210,7 +213,9 @@ function App() {
       }
       return newHistory
     })
-    setHistoryIndex(prev => Math.min(prev + 1, MAX_HISTORY - 1))
+    const newIndex = Math.min(currentIndex + 1, MAX_HISTORY - 1)
+    setHistoryIndex(newIndex)
+    historyIndexRef.current = newIndex
     // Mark when unsaved changes started (only if not already tracking)
     if (unsavedSince.current === null) {
       unsavedSince.current = Date.now()
@@ -221,8 +226,10 @@ function App() {
   const undo = useCallback(() => {
     if (historyIndex > 0) {
       isUndoRedo.current = true
-      setHistoryIndex(prev => prev - 1)
-      setGrid(cloneGrid(history[historyIndex - 1]))
+      const newIndex = historyIndex - 1
+      setHistoryIndex(newIndex)
+      historyIndexRef.current = newIndex
+      setGrid(cloneGrid(history[newIndex]))
     }
   }, [history, historyIndex])
 
@@ -230,83 +237,19 @@ function App() {
   const redo = useCallback(() => {
     if (historyIndex < history.length - 1) {
       isUndoRedo.current = true
-      setHistoryIndex(prev => prev + 1)
-      setGrid(cloneGrid(history[historyIndex + 1]))
+      const newIndex = historyIndex + 1
+      setHistoryIndex(newIndex)
+      historyIndexRef.current = newIndex
+      setGrid(cloneGrid(history[newIndex]))
     }
   }, [history, historyIndex])
-
-  // Keyboard shortcuts for undo/redo
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
-        e.preventDefault()
-        if (e.shiftKey) {
-          redo()
-        } else {
-          undo()
-        }
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'y') {
-        e.preventDefault()
-        redo()
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'c' && selection) {
-        e.preventDefault()
-        copySelection()
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'v' && clipboard) {
-        e.preventDefault()
-        pasteClipboard()
-      }
-      // Shift+D: Duplicate selection with drag
-      if (e.shiftKey && e.key === 'D' && selection && !isDuplicateDragging) {
-        e.preventDefault()
-        // Copy the selection content
-        const { startRow, startCol, endRow, endCol } = selection
-        const content = []
-        for (let r = startRow; r <= endRow; r++) {
-          const row = []
-          for (let c = startCol; c <= endCol; c++) {
-            row.push(grid[r][c])
-          }
-          content.push(row)
-        }
-        duplicateClipboard.current = {
-          content,
-          rows: endRow - startRow + 1,
-          cols: endCol - startCol + 1
-        }
-        setIsDuplicateDragging(true)
-        // Start preview at selection location
-        setDuplicatePreview({
-          startRow,
-          startCol,
-          endRow,
-          endCol
-        })
-      }
-      // Shift+F: Show fill color popup
-      if (e.shiftKey && e.key === 'F' && selection) {
-        e.preventDefault()
-        setShowFillPopup(true)
-      }
-      if (e.key === 'Escape') {
-        setSelection(null)
-        setContextMenu(null)
-        setIsDuplicateDragging(false)
-        setDuplicatePreview(null)
-        setShowFillPopup(false)
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [undo, redo, selection, clipboard, grid, isDuplicateDragging])
 
   // Initialize history with first grid state
   useEffect(() => {
     if (history.length === 0) {
       setHistory([cloneGrid(grid)])
       setHistoryIndex(0)
+      historyIndexRef.current = 0
     }
   }, [])
 
@@ -330,9 +273,19 @@ function App() {
           }
 
           const shouldSave = window.confirm(
-            'You have unsaved changes!\n\nWould you like to save your progress now?\n\nClick OK to save, or Cancel to continue without saving.'
+            'You have unsaved changes!\n\nWould you like to save your progress now?\n\nClick OK to save, or Cancel to dismiss this reminder.'
           )
           if (shouldSave) {
+            // Prompt for filename
+            const defaultName = 'domino-layout'
+            const filename = window.prompt('Enter a name for your file:', defaultName)
+            if (filename === null) {
+              // User cancelled the prompt - reset timer
+              unsavedSince.current = Date.now()
+              return
+            }
+            const finalName = filename.trim() || defaultName
+
             // Trigger save - use refs to get current values
             const currentPalette = paletteRef.current
             const data = {
@@ -346,7 +299,7 @@ function App() {
             const url = URL.createObjectURL(blob)
             const a = document.createElement('a')
             a.href = url
-            a.download = 'domino-layout.json'
+            a.download = `${finalName}.json`
             document.body.appendChild(a)
             a.click()
             document.body.removeChild(a)
@@ -354,7 +307,7 @@ function App() {
             unsavedSince.current = null
             gridSnapshotRef.current = cloneGrid(currentGrid)
           } else {
-            // User dismissed - reset timer for another 5 mins (keep same snapshot)
+            // User dismissed - reset timer for another 5 mins
             unsavedSince.current = Date.now()
           }
         }
@@ -525,6 +478,73 @@ function App() {
     })
   }, [selection, selectedColor, saveToHistory])
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+        e.preventDefault()
+        if (e.shiftKey) {
+          redo()
+        } else {
+          undo()
+        }
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'y') {
+        e.preventDefault()
+        redo()
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'c' && selection) {
+        e.preventDefault()
+        copySelection()
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'v' && clipboard) {
+        e.preventDefault()
+        pasteClipboard()
+      }
+      // Shift+D: Duplicate selection with drag
+      if (e.shiftKey && e.key === 'D' && selection && !isDuplicateDragging) {
+        e.preventDefault()
+        // Copy the selection content
+        const { startRow, startCol, endRow, endCol } = selection
+        const content = []
+        for (let r = startRow; r <= endRow; r++) {
+          const row = []
+          for (let c = startCol; c <= endCol; c++) {
+            row.push(grid[r][c])
+          }
+          content.push(row)
+        }
+        duplicateClipboard.current = {
+          content,
+          rows: endRow - startRow + 1,
+          cols: endCol - startCol + 1
+        }
+        setIsDuplicateDragging(true)
+        // Start preview at selection location
+        setDuplicatePreview({
+          startRow,
+          startCol,
+          endRow,
+          endCol
+        })
+      }
+      // Shift+F: Fill selection with currently selected color
+      if (e.shiftKey && e.key === 'F' && selection) {
+        e.preventDefault()
+        fillSelection()
+      }
+      if (e.key === 'Escape') {
+        setSelection(null)
+        setContextMenu(null)
+        setIsDuplicateDragging(false)
+        setDuplicatePreview(null)
+        setShowFillPopup(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [undo, redo, selection, clipboard, grid, isDuplicateDragging, fillSelection, copySelection, pasteClipboard])
+
   // Clear section (fill with 'clear')
   const clearSectionWithClear = useCallback(() => {
     if (!selection) return
@@ -558,10 +578,10 @@ function App() {
     if (!selection) return
     setIsDraggingSelection(true)
     // Store where within the selection the user clicked
-    setDragOffset({
+    dragOffsetRef.current = {
       row: row - selection.startRow,
       col: col - selection.startCol
-    })
+    }
     // Initial preview at current position
     setDragPreview({
       startRow: selection.startRow,
@@ -574,8 +594,8 @@ function App() {
   // Update drag preview position
   const moveDragSelection = useCallback((row, col) => {
     if (!isDraggingSelection || !selection) return
-    const newStartRow = row - dragOffset.row
-    const newStartCol = col - dragOffset.col
+    const newStartRow = row - dragOffsetRef.current.row
+    const newStartCol = col - dragOffsetRef.current.col
     const height = selection.endRow - selection.startRow
     const width = selection.endCol - selection.startCol
     setDragPreview({
@@ -584,7 +604,7 @@ function App() {
       endRow: newStartRow + height,
       endCol: newStartCol + width
     })
-  }, [isDraggingSelection, selection, dragOffset])
+  }, [isDraggingSelection, selection])
 
   // End drag and move the selection
   const endDragSelection = useCallback(() => {
@@ -952,6 +972,9 @@ function App() {
           // Auto-zoom to fit the loaded grid
           const optimalZoom = calculateOptimalZoom(data.rows, data.columns)
           setZoom(optimalZoom)
+          // Update snapshot to loaded grid (this is now the "saved" state)
+          gridSnapshotRef.current = cloneGrid(data.cells)
+          unsavedSince.current = null
         }
       } catch (err) {
         console.error('Failed to load grid:', err)
@@ -1212,6 +1235,7 @@ Click Cancel to abort import`
         onSelectColor={setSelectedColor}
         onReplaceColor={replaceColor}
         selection={selection}
+        grid={grid}
       />
 
       <GridControls

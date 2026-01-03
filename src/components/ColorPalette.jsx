@@ -8,10 +8,24 @@ function ColorPalette({
   selectedColor,
   onSelectColor,
   onReplaceColor,
-  selection
+  selection,
+  grid
 }) {
   const hasSelection = selection !== null
   const [replaceMenu, setReplaceMenu] = useState(null)
+
+  // Calculate which colors are in the current selection
+  const colorsInSelection = new Set()
+  if (hasSelection && grid) {
+    const { startRow, startCol, endRow, endCol } = selection
+    for (let r = startRow; r <= endRow; r++) {
+      for (let c = startCol; c <= endCol; c++) {
+        if (grid[r] && grid[r][c]) {
+          colorsInSelection.add(grid[r][c])
+        }
+      }
+    }
+  }
 
   const handleSwatchClick = (colorHex) => {
     onSelectColor(colorHex)
@@ -56,6 +70,7 @@ function ColorPalette({
             const isWhite = colorHex.toLowerCase() === '#ffffff'
             const isSpecial = isClear || isDisney
             const isSelected = selectedColor === colorHex
+            const isInSelection = colorsInSelection.has(colorHex)
 
             return (
               <div
@@ -65,6 +80,7 @@ function ColorPalette({
                   ${isDisney ? 'disney-swatch' : ''}
                   ${isWhite ? 'white-swatch' : ''}
                   ${isSelected ? 'selected' : ''}
+                  ${isInSelection ? 'in-selection' : ''}
                 `}
                 style={!isSpecial ? { backgroundColor: colorHex } : undefined}
                 onClick={() => handleSwatchClick(colorHex)}
