@@ -130,20 +130,6 @@ function DominoStats({ grid, palette }) {
           </div>
         )}
 
-        {(hasWarnings || hasApproaching) && (
-          <div className="stats-alerts">
-            {hasWarnings && (
-              <p className="stats-warning">
-                Some colors exceed available quantity!
-              </p>
-            )}
-            {hasApproaching && (
-              <p className="stats-approaching">
-                Some colors approaching limit (within 10).
-              </p>
-            )}
-          </div>
-        )}
       </div>
     </section>
   )

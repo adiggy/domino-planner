@@ -25,21 +25,21 @@ const DEFAULT_PALETTE = [
   { hex: '#fef064', quantity: 50, name: 'Yellow' },
   { hex: '#a1d170', quantity: 25, name: 'Neon Green' },
   { hex: '#4fac3c', quantity: 50, name: 'Light Green' },
-  { hex: '#31694d', quantity: 50, name: 'Dark Green' },
+  { hex: '#31694d', quantity: 60, name: 'Dark Green' },
   { hex: '#5db5bb', quantity: 100, name: 'Teal' },
-  { hex: '#92bfdb', quantity: 50, name: 'Sky Blue' },
+  { hex: '#92bfdb', quantity: 60, name: 'Sky Blue' },
   { hex: '#3e8acc', quantity: 25, name: 'Aqua Blue' },
-  { hex: '#1d55b1', quantity: 125, name: 'Medium Blue' },
+  { hex: '#1d55b1', quantity: 110, name: 'Medium Blue' },
   { hex: '#193582', quantity: 50, name: 'Dark Blue' },
-  { hex: '#26224e', quantity: 50, name: 'Purple' },
+  { hex: '#26224e', quantity: 60, name: 'Purple' },
   { hex: '#7c6ca6', quantity: 25, name: 'Lavender' },
   { hex: '#824555', quantity: 25, name: 'Magenta' },
   { hex: '#c66488', quantity: 50, name: 'Pink' },
   { hex: '#d399a7', quantity: 100, name: 'Light Pink' },
   // Neutrals
-  { hex: '#ffffff', quantity: 125, name: 'White' },
+  { hex: '#ffffff', quantity: 110, name: 'White' },
   { hex: '#8b9086', quantity: 90, name: 'Gray' },
-  { hex: '#000000', quantity: 50, name: 'Black' },
+  { hex: '#000000', quantity: 60, name: 'Black' },
 ]
 
 // Calculate total available dominoes for recommendations
@@ -172,6 +172,7 @@ function App() {
   const fileInputRef = useRef(null)
   const imageInputRef = useRef(null)
   const paletteInputRef = useRef(null)
+  const workspaceMainRef = useRef(null)
 
   // Track unsaved changes for save reminder
   const unsavedSince = useRef(null)
@@ -342,11 +343,13 @@ function App() {
 
   // Clear the entire grid
   const clearGrid = useCallback(() => {
+    if (!window.confirm('Are you sure you want to clear the entire grid? This action cannot be undone.')) {
+      return
+    }
     const newGrid = grid.map(row => row.map(() => CLEAR))
     saveToHistory(newGrid)
     setGrid(newGrid)
   }, [grid, saveToHistory])
-
 
   // Get mirrored positions
   const getMirroredPositions = useCallback((row, col) => {
@@ -932,21 +935,30 @@ function App() {
     const BASE_V_GAP = 30
     const BASE_LABEL_WIDTH = 30
     const BASE_FILL_BTN_SIZE = 24
+    const GRID_PADDING = 48 // padding inside workspace-main + grid-container
 
     // Calculate grid dimensions at 100% zoom
     const gridWidth = BASE_LABEL_WIDTH + (BASE_FILL_BTN_SIZE + 10) + cols * BASE_DOMINO_WIDTH + (cols - 1) * BASE_H_GAP
     const gridHeight = BASE_LABEL_WIDTH + (BASE_FILL_BTN_SIZE + 10) + rows * BASE_DOMINO_HEIGHT + (rows - 1) * BASE_V_GAP
 
-    // Get available viewport (with padding for controls and margins)
-    const availableWidth = window.innerWidth - 100 // padding for margins
-    const availableHeight = window.innerHeight - 400 // space for header, controls, stats
+    // Get actual available space from the workspace-main element
+    let availableWidth, availableHeight
+    if (workspaceMainRef.current) {
+      const rect = workspaceMainRef.current.getBoundingClientRect()
+      availableWidth = rect.width - GRID_PADDING * 2
+      availableHeight = rect.height - GRID_PADDING * 2
+    } else {
+      // Fallback if ref not available
+      availableWidth = window.innerWidth - 100
+      availableHeight = window.innerHeight - 350
+    }
 
     // Calculate zoom to fit both dimensions
     const zoomX = (availableWidth / gridWidth) * 100
     const zoomY = (availableHeight / gridHeight) * 100
 
-    // Use the smaller zoom to ensure it fits, but clamp to reasonable range
-    const optimalZoom = Math.min(zoomX, zoomY)
+    // Use the smaller zoom to ensure it fits, with 3% safety margin
+    const optimalZoom = Math.min(zoomX, zoomY) * 0.97
     return Math.max(20, Math.min(200, Math.round(optimalZoom)))
   }, [])
 
@@ -1222,22 +1234,12 @@ Click Cancel to abort import`
 
   return (
     <div
-      className="app"
+      className="app workspace"
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       onClick={handleAppClick}
     >
-      <h1 className="app-title">Domino Planner</h1>
-
-      <ColorPalette
-        palette={palette}
-        selectedColor={selectedColor}
-        onSelectColor={setSelectedColor}
-        onReplaceColor={replaceColor}
-        selection={selection}
-        grid={grid}
-      />
-
+      {/* Toolbar */}
       <GridControls
         rowInput={rowInput}
         colInput={colInput}
@@ -1262,6 +1264,20 @@ Click Cancel to abort import`
         onPaste={pasteClipboard}
         onFillSelection={fillSelection}
         onClearSelection={clearSelection}
+        onFitScreen={() => {
+          const optimalZoom = calculateOptimalZoom(grid.length, grid[0]?.length || 0)
+          setZoom(optimalZoom)
+        }}
+      />
+
+      {/* Color Palette */}
+      <ColorPalette
+        palette={palette}
+        selectedColor={selectedColor}
+        onSelectColor={setSelectedColor}
+        onReplaceColor={replaceColor}
+        selection={selection}
+        grid={grid}
       />
 
       <input
@@ -1288,9 +1304,9 @@ Click Cancel to abort import`
         onChange={handlePaletteImport}
       />
 
-      <DominoStats grid={grid} palette={palette} />
-
-      <DominoGrid
+      {/* Main Workspace */}
+      <div className="workspace-main" ref={workspaceMainRef}>
+        <DominoGrid
         grid={grid}
         zoom={zoom}
         palette={palette}
@@ -1306,6 +1322,21 @@ Click Cancel to abort import`
         onFillColumn={fillColumn}
         onContextMenu={handleContextMenu}
       />
+      </div>
+
+      {/* Status Bar */}
+      <DominoStats grid={grid} palette={palette} />
+
+      {/* Keyboard Shortcuts */}
+      <div className="shortcuts-bar">
+        <span><kbd>Shift</kbd>+drag to select</span>
+        <span><kbd>Shift</kbd>+<kbd>D</kbd> duplicate</span>
+        <span><kbd>Shift</kbd>+<kbd>F</kbd> fill</span>
+        <span><kbd>Cmd</kbd>+<kbd>C</kbd> copy</span>
+        <span><kbd>Cmd</kbd>+<kbd>V</kbd> paste</span>
+        <span><kbd>Cmd</kbd>+<kbd>Z</kbd> undo</span>
+        <span><kbd>Esc</kbd> deselect</span>
+      </div>
 
       {contextMenu && (
         <ContextMenu
